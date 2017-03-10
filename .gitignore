@@ -1,0 +1,5 @@
+*.exe
+*.lib
+Debug/
+Release/
+.vs/
