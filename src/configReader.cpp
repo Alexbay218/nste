@@ -1,10 +1,9 @@
 #include "../include/configReader.h"
 
+configReader::configReader(std::string configFile) {
 
-
-configReader::configReader() {
 }
 
-
-configReader::~configReader() {
+void configReader::loadProfile(std::string profileFile) {
+	
 }
