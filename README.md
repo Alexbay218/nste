@@ -31,4 +31,4 @@ Windows releases are built using Microsoft Visual Studio 2017
 Currently not supporting Linux right now
 
 ## Bugs:
-Submit bugs and issues into git issues
+Submit bugs and issues into Github issues
