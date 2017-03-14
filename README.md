@@ -1,5 +1,6 @@
 # NSTE
 **No Save Text Editor**
+
 Custom cross-platform minimalistic text editor
 
 ### NTMP Files:
