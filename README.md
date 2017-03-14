@@ -18,10 +18,10 @@ Opens document (if .ntmp file exists, opens .ntmp file)
 Pushes the .ntmp file contents into the document that it refers to
 
 
-##Compiling:
+## Compiling:
 Make sure to setup the nana library (http://nanapro.org/en-us/)
 Windows releases are built using Microsoft Visual Studio 2017
 Currently not supporting Linux right now
 
-##Bugs:
+## Bugs:
 Submit bugs and issues into git issues
