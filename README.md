@@ -2,6 +2,7 @@
 **No Save Text Editor**
 
 Custom cross-platform minimalistic text editor
+<hr>
 
 ### NTMP Files:
 When any changes are made, it is pushed into the .ntmp file (if it doesn't exist, it is created)
