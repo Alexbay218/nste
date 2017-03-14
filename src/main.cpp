@@ -1,5 +1,20 @@
+#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__) || defined(__BORLANDC__)
+#define OS_WIN
+#endif
+
 #include "../include/runClass.h"
+#include <nana/gui.hpp>
+#include <nana/gui/wvl.hpp>
+#include <nana/gui/widgets/menubar.hpp>
+#include <nana/gui/widgets/toolbar.hpp>
+#include <nana/gui/widgets/textbox.hpp>
+#include <nana/gui/filebox.hpp>
+#include <fstream>
 #include <iostream>
+#include <string>
+#include <vector>
+#include <functional>
+#include <array>
 
 int main(int argc, char *argv[]) {
 	runClass mainRun;
@@ -9,90 +24,68 @@ int main(int argc, char *argv[]) {
 	std::string path = argv[0];
 	path = path.substr(0, path.find("nste.exe"));
 	std::cout << "Path: " << path << std::endl;
-	std::string targetFile;
+	std::string currentFile;
 	if (argc > 1) {
-		targetFile = argv[1];
-		if (targetFile.find(".ntmp") != std::string::npos) {
-			targetFile = targetFile.substr(0, targetFile.find(".ntmp"));
-		}
-		mainRun.fm.caption("NSTE - " + targetFile);
-		std::cout << "Loading: " << targetFile << std::endl;
-		std::fstream ntmpCheck(targetFile + ".ntmp");
-		if (ntmpCheck.is_open()) {
-			mainRun.loaded = 2;
-			mainRun.ed.load(targetFile + ".ntmp");
-		}
-		else {
-			mainRun.loaded = 1;
-			mainRun.ed.load(targetFile);
-		}
+		currentFile = mainRun.loadFile(argv[1]);
 	}
 	mainRun.onResize(); 
 	mainRun.mb.at(0).append("Open", [&](nana::menu::item_proxy &) {
 		if (mainRun.loaded > 0) {
 			if (mainRun.fb()) {
-				std::string c = path + "nste.exe " + mainRun.fb.file();
+				std::string c = argv[0];
+#ifdef OS_WIN
+				c = "start " + c + " " + mainRun.fb.file();
+#else
+				c = c + " " + mainRun.fb.file() + " &";
+#endif
+				std::cout << "Running: " << c;
 				system(c.c_str());
 			}
 		}
 		else {
 			if (mainRun.fb()) {
-				targetFile = mainRun.fb.file();
-				if (targetFile.find(".ntmp") != std::string::npos) {
-					targetFile = targetFile.substr(0, targetFile.find(".ntmp"));
-				}
-				mainRun.fm.caption("NSTE - " + targetFile);
-				std::cout << "Loading: " << targetFile << std::endl;
-				std::fstream ntmpCheck(targetFile + ".ntmp");
-				if (ntmpCheck.is_open()) {
-					mainRun.loaded = 2;
-					mainRun.ed.load(targetFile + ".ntmp");
-				}
-				else {
-					mainRun.loaded = 1;
-					mainRun.ed.load(targetFile);
-				}
+				currentFile = mainRun.loadFile(mainRun.fb.file());
 			}
 		}
 	});
 	mainRun.mb.at(0).append("Create", [&](nana::menu::item_proxy &) {
 		if (mainRun.fb()) {
 			mainRun.ed.store(mainRun.fb.file());
+			currentFile = mainRun.loadFile(mainRun.fb.file());
 		}
 	});
 	mainRun.mb.at(0).append("Merge", [&](nana::menu::item_proxy &) {
 		if (mainRun.loaded > 0) {
-			mainRun.ed.store(targetFile);
+			mainRun.ed.store(currentFile);
+			mainRun.merged = true;
+			if (mainRun.merged) {
+				mainRun.fm.caption("NSTE - " + currentFile);
+			}
+			else {
+				mainRun.fm.caption("NSTE - " + currentFile + " (Unmerged)");
+			}
+		}
+		else {
+			nana::msgbox mb(mainRun.fm, "Cannot Merge!");
+			mb.icon(nana::msgbox::icon_error) << "Please create file first!";
+			mb.show();
 		}
 	});
 	mainRun.fm.show();
 	mainRun.fm.events().resizing([&] {mainRun.onResize(); });
 	mainRun.fm.events().resized([&] {mainRun.onResize(); });
-	mainRun.ed.events().key_press([&] {
+	mainRun.ed.events().key_release([&] {
 		if (mainRun.loaded > 0) {
 			std::cout << "Saving" << std::endl;
-			mainRun.ed.store(targetFile + ".ntmp"); 
+			mainRun.ed.store(currentFile + ".ntmp");
+			mainRun.merged = false;
+			if (mainRun.merged) {
+				mainRun.fm.caption("NSTE - " + currentFile);
+			}
+			else {
+				mainRun.fm.caption("NSTE - " + currentFile + " (Unmerged)");
+			}
 		}
 	});
 	nana::exec();
-}
-
-runClass::runClass() : ed(fm), mb(fm), fb(true) {
-	defaultFont = new nana::paint::font("Consolas", 10, false, false, false, false);
-	fm.typeface(*defaultFont);
-	fm.caption("NSTE");
-	fm.size(nana::size(600, 400));
-	
-	ed.multi_lines(true);
-	ed.typeface(*defaultFont);
-
-	mb.typeface(*defaultFont);
-	mb.push_back("File");
-
-	loaded = 0;
-}
-
-void runClass::onResize() {
-	ed.move(nana::point(5, 30));
-	ed.size(nana::size(fm.size().width - 10, fm.size().height - 35));
 }
