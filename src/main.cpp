@@ -60,6 +60,8 @@ int main(int argc, char *argv[]) {
 			if (mainRun.fb()) {
 				currentFile = mainRun.loadFile(mainRun.fb.file());
 				profileRead();
+				mainRun.ed.enable_caret();
+				mainRun.fm.activate();
 				mainRun.ed.focus();
 			}
 		}
@@ -76,6 +78,7 @@ int main(int argc, char *argv[]) {
 		if (mainRun.loaded > 0) {
 			mainRun.ed.store(currentFile);
 			mainRun.merged = true;
+			mainRun.ed.edited_reset();
 			if (mainRun.merged) {
 				mainRun.fm.caption("NSTE - " + currentFile);
 			}
@@ -100,7 +103,12 @@ int main(int argc, char *argv[]) {
 		if (!arg.ctrl && mainRun.loaded > 0) {
 			std::cout << "Pushing" << std::endl;
 			mainRun.ed.store(currentFile + ".ntmp");
-			mainRun.merged = mainRun.filesContentEqual(currentFile,currentFile+".ntmp");
+			if (mainRun.loaded == 2) {
+				mainRun.merged = mainRun.ed.edited();
+			}
+			else {
+				mainRun.merged = true;
+			}
 			if (mainRun.merged) {
 				mainRun.fm.caption("NSTE - " + currentFile);
 			}
@@ -136,7 +144,13 @@ int main(int argc, char *argv[]) {
 			pv.events().resizing(r);
 			r();
 			pv.show();
-			nana::exec();
+			pv.modality();
+			std::cout << "Done with preview" << std::endl;
+			mainRun.ed.enable_caret();
+			mainRun.fm.activate();
+			mainRun.ed.focus();
+			mainRun.mb.focus();
+			mainRun.ed.focus();
 		}
 		else {
 			nana::msgbox mb(mainRun.fm, "Cannot Preview!");

@@ -9,6 +9,7 @@ runClass::runClass() : ed(fm), mb(fm), fb(true) {
 	ed.multi_lines(true);
 	ed.typeface(*defaultFont);
 	ed.focus_behavior(nana::textbox::text_focus_behavior::none);
+	ed.enable_caret();
 
 	mb.typeface(*defaultFont);
 	mb.push_back("File");
