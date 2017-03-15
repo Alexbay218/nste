@@ -1,5 +1,5 @@
 #pragma once
-#include "../include/configReader.h"
+#include "../include/profileReader.h"
 #include <nana/gui.hpp>
 #include <nana/gui/wvl.hpp>
 #include <nana/gui/widgets/menubar.hpp>

@@ -18,6 +18,7 @@
 
 int main(int argc, char *argv[]) {
 	runClass mainRun;
+	profileReader mainProfile;
 
 	std::cout << "Arguments: " << argc << std::endl;
 	int ac = argc;
@@ -45,6 +46,17 @@ int main(int argc, char *argv[]) {
 		else {
 			if (mainRun.fb()) {
 				currentFile = mainRun.loadFile(mainRun.fb.file());
+				if (currentFile.find(".") != std::string::npos) {
+					mainProfile.loadProfile(path, currentFile.substr(currentFile.find_last_of(".") + 1));
+					for (int i = 0; i < mainProfile.wordList.size(); i++) {
+						std::cout << "Highlight for: " << mainProfile.wordList[i] << std::endl;
+						mainRun.ed.set_highlight(mainProfile.wordList[i], mainProfile.colorList[i], mainProfile.bColorList[i]);
+						mainRun.ed.set_keywords(mainProfile.wordList[i], false, true, { mainProfile.wordList[i] });
+					}
+				}
+				else {
+					std::cout << "Profile was not loaded! " << std::endl;
+				}
 			}
 		}
 	});
@@ -71,9 +83,7 @@ int main(int argc, char *argv[]) {
 			mb.show();
 		}
 	});
-	mainRun.fm.show();
-	mainRun.fm.events().resizing([&] {mainRun.onResize(); });
-	mainRun.fm.events().resized([&] {mainRun.onResize(); });
+	
 	mainRun.ed.events().key_release([&] {
 		if (mainRun.loaded > 0) {
 			std::cout << "Saving" << std::endl;
@@ -87,5 +97,37 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	});
+	//Profile Reading
+	if (currentFile.find(".") != std::string::npos) {
+		mainProfile.loadProfile(path, currentFile.substr(currentFile.find_last_of(".")+1));
+		for (int i = 0; i < mainProfile.wordList.size(); i++) {
+			std::cout << "Highlight for: " << mainProfile.wordList[i] << std::endl;
+			mainRun.ed.set_highlight(mainProfile.wordList[i], mainProfile.colorList[i], mainProfile.bColorList[i]);
+			mainRun.ed.set_keywords(mainProfile.wordList[i], false, true, { mainProfile.wordList[i] });
+		}
+	}
+	else {
+		std::cout << "Profile was not loaded! " << std::endl;
+	}
+	mainRun.fm.events().resizing([&] {mainRun.onResize(); });
+	mainRun.fm.events().resized([&] {mainRun.onResize(); });
+	mainRun.fm.events().unload([&](const nana::arg_unload& arg) {
+		if (!mainRun.merged) {
+			nana::msgbox emb(mainRun.fm, "Unmerged Changes", nana::msgbox::yes_no_cancel);
+			emb.icon(nana::msgbox::icon_warning) << "Do you want to merge changes?\n";
+			nana::msgbox::pick_t r = emb.show();
+			if (r == nana::msgbox::pick_yes) {
+				mainRun.ed.store(currentFile);
+			}
+			else if (r == nana::msgbox::pick_cancel) {
+				arg.cancel = true;
+			}
+			else {
+				arg.cancel = false;
+			}
+		}
+	});
+	mainRun.fm.show();
+	mainRun.ed.focus();
 	nana::exec();
 }
