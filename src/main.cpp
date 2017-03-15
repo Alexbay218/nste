@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
 	mainRun.onResize(); 
 
 	auto profileRead = [&] {
+		std::cout << "Opening profile for " << currentFile << std::endl;
 		if (currentFile.find(".") != std::string::npos) {
 			mainProfile.loadProfile(path, currentFile.substr(currentFile.find_last_of(".") + 1));
 			for (unsigned int i = 0; i < mainProfile.wordList.size(); i++) {
@@ -98,7 +99,7 @@ int main(int argc, char *argv[]) {
 		if (!arg.ctrl && mainRun.loaded > 0) {
 			std::cout << "Pushing" << std::endl;
 			mainRun.ed.store(currentFile + ".ntmp");
-			mainRun.merged = false;
+			mainRun.merged = mainRun.filesContentEqual(currentFile,currentFile+".ntmp");
 			if (mainRun.merged) {
 				mainRun.fm.caption("NSTE - " + currentFile);
 			}
@@ -143,6 +144,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	});
+	profileRead();
 	mainRun.fm.show();
 	mainRun.ed.focus();
 	nana::exec();
