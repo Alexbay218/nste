@@ -24,8 +24,6 @@ int main(int argc, char *argv[]) {
 		currentFile = mainRun.loadFile(argv[1]);
 	}
 
-	mainProfile.loadProfile(path);
-	mainProfile.loadTheme(&mainRun.fm, &mainRun.mb, &mainRun.ed);
 	mainRun.onResize(); 
 
 	auto profileRead = [&] {
@@ -41,6 +39,8 @@ int main(int argc, char *argv[]) {
 		else {
 			std::cout << "Profile was not loaded! " << std::endl;
 		}
+		mainProfile.loadProfile(path);
+		mainProfile.loadTheme(&mainRun.fm, &mainRun.mb, &mainRun.ed);
 	};
 	auto open = [&] {
 		mainRun.fb.init_path(path);
@@ -60,6 +60,7 @@ int main(int argc, char *argv[]) {
 			if (mainRun.fb()) {
 				currentFile = mainRun.loadFile(mainRun.fb.file());
 				profileRead();
+				mainRun.ed.focus();
 			}
 		}
 	};
@@ -88,7 +89,7 @@ int main(int argc, char *argv[]) {
 			mb.show();
 		}
 	};
-	auto revert = [&](nana::menu::item_proxy &) {
+	auto revert = [&] {
 		mainRun.ed.load(currentFile);
 		mainRun.ed.store(currentFile + ".ntmp");
 		currentFile = mainRun.loadFile(currentFile);
@@ -119,11 +120,36 @@ int main(int argc, char *argv[]) {
 			open();
 		}
 	};
+	auto preview = [&] {
+		if (mainRun.loaded > 0) {
+			std::cout << "Previewing " << currentFile << std::endl;
+			nana::form pv(mainRun.fm,nana::size(600,300),nana::appearance());
+			pv.caption(currentFile);
+			nana::textbox pvtb(pv);
+			pvtb.editable(false);
+			pvtb.focus_behavior(nana::textbox::text_focus_behavior::none);
+			pvtb.typeface(*mainRun.defaultFont);
+			pvtb.load(currentFile);
+			pvtb.move(nana::point(5, 5));
+			auto r = [&] {pvtb.size(nana::size(pv.size().width - 10, pv.size().height - 10)); };
+			pv.events().resized(r);
+			pv.events().resizing(r);
+			r();
+			pv.show();
+			nana::exec();
+		}
+		else {
+			nana::msgbox mb(mainRun.fm, "Cannot Preview!");
+			mb.icon(nana::msgbox::icon_error) << "Please create file first!";
+			mb.show();
+		}
+	};
 
 	mainRun.mb.at(0).append("Open", [&](nana::menu::item_proxy &) {open(); });
 	mainRun.mb.at(0).append("Create", [&](nana::menu::item_proxy &) {create(); });
 	mainRun.mb.at(0).append("Merge", [&](nana::menu::item_proxy &) {merge(); });
-	mainRun.mb.at(0).append("Revert", revert);
+	mainRun.mb.at(0).append("Revert", [&](nana::menu::item_proxy &) {revert(); });
+	mainRun.mb.at(1).append("Preview", [&](nana::menu::item_proxy &) {preview(); });
 
 	mainRun.ed.events().key_release(push);
 	mainRun.fm.events().resizing([&] {mainRun.onResize(); });

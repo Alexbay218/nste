@@ -8,9 +8,11 @@ runClass::runClass() : ed(fm), mb(fm), fb(true) {
 	
 	ed.multi_lines(true);
 	ed.typeface(*defaultFont);
+	ed.focus_behavior(nana::textbox::text_focus_behavior::none);
 
 	mb.typeface(*defaultFont);
 	mb.push_back("File");
+	mb.push_back("View");
 
 	loaded = 0;
 }
