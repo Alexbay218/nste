@@ -64,6 +64,17 @@ int main(int argc, char *argv[]) {
 		if (mainRun.fb()) {
 			mainRun.ed.store(mainRun.fb.file());
 			currentFile = mainRun.loadFile(mainRun.fb.file());
+			if (currentFile.find(".") != std::string::npos) {
+				mainProfile.loadProfile(path, currentFile.substr(currentFile.find_last_of(".") + 1));
+				for (int i = 0; i < mainProfile.wordList.size(); i++) {
+					std::cout << "Highlight for: " << mainProfile.wordList[i] << std::endl;
+					mainRun.ed.set_highlight(mainProfile.wordList[i], mainProfile.colorList[i], mainProfile.bColorList[i]);
+					mainRun.ed.set_keywords(mainProfile.wordList[i], false, true, { mainProfile.wordList[i] });
+				}
+			}
+			else {
+				std::cout << "Profile was not loaded! " << std::endl;
+			}
 		}
 	});
 	mainRun.mb.at(0).append("Merge", [&](nana::menu::item_proxy &) {
@@ -83,7 +94,19 @@ int main(int argc, char *argv[]) {
 			mb.show();
 		}
 	});
-	
+	mainRun.mb.at(0).append("Revert", [&](nana::menu::item_proxy &) {
+		mainRun.ed.load(currentFile);
+		mainRun.ed.store(currentFile+".ntmp");
+		currentFile = mainRun.loadFile(currentFile);
+		if (currentFile.find(".") != std::string::npos) {
+			mainProfile.loadProfile(path, currentFile.substr(currentFile.find_last_of(".") + 1));
+			for (int i = 0; i < mainProfile.wordList.size(); i++) {
+				std::cout << "Highlight for: " << mainProfile.wordList[i] << std::endl;
+				mainRun.ed.set_highlight(mainProfile.wordList[i], mainProfile.colorList[i], mainProfile.bColorList[i]);
+				mainRun.ed.set_keywords(mainProfile.wordList[i], false, true, { mainProfile.wordList[i] });
+			}
+		}
+	});
 	mainRun.ed.events().key_release([&] {
 		if (mainRun.loaded > 0) {
 			std::cout << "Saving" << std::endl;

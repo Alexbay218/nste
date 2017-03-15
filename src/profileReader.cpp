@@ -10,7 +10,7 @@ bool profileReader::loadProfile(std::string currentPath, std::string extension) 
 	if (pfile.is_open()) {
 		while (std::getline(pfile,line)) {
 			if (line.find(">") != std::string::npos && line.find("<") != std::string::npos) {
-				loadProfile(currentPath, line.substr(line.find(">")+1, line.find("<")-line.find(">")));
+				loadProfile(currentPath, line.substr(line.find(">")+1, line.find("<")-line.find(">")-1));
 			}
 			if (line.find(":") != std::string::npos) {
 				wordList.push_back(line.substr(0, line.find(":")));
