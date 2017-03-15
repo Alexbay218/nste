@@ -1,6 +1,25 @@
 #include "../include/profileReader.h"
 
 profileReader::profileReader() {
+	themeColorList.push_back(colorFromHex("#999999")); //fmbgcolor
+	themeColorList.push_back(colorFromHex("#000000")); //fmfgcolor
+	themeColorList.push_back(colorFromHex("#d9d9d9")); //mbbgcolor
+	themeColorList.push_back(colorFromHex("#ffffff")); //mbfgcolor
+	themeColorList.push_back(colorFromHex("#ffffff")); //edbgcolor
+	themeColorList.push_back(colorFromHex("#000000")); //edfgcolor
+	themeColorList.push_back(colorFromHex("#0099ff")); //edsbgcolor
+	themeColorList.push_back(colorFromHex("#ffffff")); //edsfgcolor
+}
+
+void profileReader::loadTheme(nana::form* fm, nana::menubar* mb, nana::textbox* ed) {
+	fm->bgcolor(themeColorList[0]);
+	fm->fgcolor(themeColorList[1]);
+	mb->bgcolor(themeColorList[2]);
+	mb->fgcolor(themeColorList[3]);
+	ed->bgcolor(themeColorList[4]);
+	ed->fgcolor(themeColorList[5]);
+	ed->scheme().selection = themeColorList[6];
+	ed->scheme().selection_text = themeColorList[7];
 }
 
 bool profileReader::loadProfile(std::string currentPath, std::string extension) {
@@ -20,10 +39,28 @@ bool profileReader::loadProfile(std::string currentPath, std::string extension) 
 				}
 				else {
 					colorList.push_back(colorFromHex(line.substr(line.find(":") + 1)));
-					bColorList.push_back(nana::color(255,255,255));
+					bColorList.push_back(themeColorList[4]);
 				}
 			}
 		}
+		return true;
+	}
+	return false;
+}
+
+bool profileReader::loadProfile(std::string currentPath) {
+	std::string line = currentPath + "profile\\default.ntheme";
+	std::cout << "Opening default profile: " << (currentPath + "profile\\default.ntheme") << std::endl;
+	std::fstream pfile(line, std::ios::in);
+	std::vector<nana::color> temp;
+	if (pfile.is_open()) {
+		int i = 0;
+		while (std::getline(pfile, line)) {
+			if (line.find(":") != std::string::npos) {
+				temp.push_back(colorFromHex(line.substr(line.find(":") + 1)));
+			}
+		}
+		themeColorList = temp;
 		return true;
 	}
 	return false;

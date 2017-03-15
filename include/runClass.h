@@ -3,7 +3,6 @@
 #include <nana/gui.hpp>
 #include <nana/gui/wvl.hpp>
 #include <nana/gui/widgets/menubar.hpp>
-#include <nana/gui/widgets/toolbar.hpp>
 #include <nana/gui/widgets/textbox.hpp>
 #include <nana/gui/filebox.hpp>
 #include <fstream>
