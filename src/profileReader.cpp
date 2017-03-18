@@ -7,19 +7,27 @@ profileReader::profileReader() {
 	themeColorList.push_back(colorFromHex("#ffffff")); //mbfgcolor
 	themeColorList.push_back(colorFromHex("#ffffff")); //edbgcolor
 	themeColorList.push_back(colorFromHex("#000000")); //edfgcolor
+	themeColorList.push_back(colorFromHex("#0000ff")); //lnfgcolor
 	themeColorList.push_back(colorFromHex("#0099ff")); //edsbgcolor
 	themeColorList.push_back(colorFromHex("#ffffff")); //edsfgcolor
 }
 
-void profileReader::loadTheme(nana::form* fm, nana::menubar* mb, nana::textbox* ed) {
+void profileReader::loadTheme(nana::form* fm, nana::menubar* mb, nana::textbox* ed, nana::label* ln) {
+	int i = themeColorList.size();
+	while (i < 9) {
+		themeColorList.push_back(colorFromHex("#000000"));
+		i++;
+	}
 	fm->bgcolor(themeColorList[0]);
 	fm->fgcolor(themeColorList[1]);
 	mb->bgcolor(themeColorList[2]);
 	mb->fgcolor(themeColorList[3]);
 	ed->bgcolor(themeColorList[4]);
 	ed->fgcolor(themeColorList[5]);
-	ed->scheme().selection = themeColorList[6];
-	ed->scheme().selection_text = themeColorList[7];
+	ed->scheme().selection = themeColorList[7];
+	ed->scheme().selection_text = themeColorList[8];
+	ln->bgcolor(themeColorList[4]);
+	ln->fgcolor(themeColorList[6]);
 }
 
 bool profileReader::loadProfile(std::string currentPath, std::string extension) {
@@ -49,8 +57,8 @@ bool profileReader::loadProfile(std::string currentPath, std::string extension) 
 }
 
 bool profileReader::loadProfile(std::string currentPath) {
-	std::string line = currentPath + "profile\\default.ntheme";
-	std::cout << "Opening default profile: " << (currentPath + "profile\\default.ntheme") << std::endl;
+	std::string line = currentPath;
+	std::cout << "Opening theme profile: " << currentPath << std::endl;
 	std::fstream pfile(line, std::ios::in);
 	std::vector<nana::color> temp;
 	if (pfile.is_open()) {

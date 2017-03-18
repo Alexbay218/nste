@@ -1,6 +1,6 @@
 #include "../include/runClass.h"
 
-runClass::runClass() : ed(fm), mb(fm), fb(true) {
+runClass::runClass() : ed(fm), ln(fm), mb(fm), fb(true), refresher() {
 	defaultFont = new nana::paint::font("Consolas", 10, false, false, false, false);
 	fm.typeface(*defaultFont);
 	fm.caption("NSTE");
@@ -9,18 +9,47 @@ runClass::runClass() : ed(fm), mb(fm), fb(true) {
 	ed.multi_lines(true);
 	ed.typeface(*defaultFont);
 	ed.focus_behavior(nana::textbox::text_focus_behavior::none);
+	ed.borderless(true);
+	ed.scheme().activated = nana::color(0, 0, 0, 0);
 	ed.enable_caret();
+
+	ln.typeface(*defaultFont);
+	ln.borderless(true);
+	ln.text_align(nana::align::right);
+	ln.scheme().activated = nana::color(0, 0, 0, 0);
 
 	mb.typeface(*defaultFont);
 	mb.push_back("File");
 	mb.push_back("View");
-
+	mb.push_back("Scripts");
 	loaded = 0;
+	running = true;
+
+	refresher = std::thread([&] {
+		while (running) {
+			lnRefresh();
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		}
+	});
+	refresher.detach();
 }
 
 void runClass::onResize() {
-	ed.move(nana::point(5, 30));
-	ed.size(nana::size(fm.size().width - 10, fm.size().height - 35));
+	ln.move(nana::point(3, 30));
+	ed.move(nana::point(35, 30));
+	ln.size(nana::size(30, fm.size().height - 35));
+	ed.size(nana::size(fm.size().width - 40, fm.size().height - 35));
+	lnRefresh();
+}
+
+void runClass::lnRefresh() {
+	lineNum.clear();
+	int i = ed.text_position()[0].y;
+	while (i <= ed.text_position().back().y) {
+		lineNum += std::to_string(i+1) + "\n";
+		i++;
+	}
+	ln.caption(lineNum);
 }
 
 std::string runClass::loadFile(std::string filename) {
@@ -44,8 +73,8 @@ std::string runClass::loadFile(std::string filename) {
 	else {
 		loaded = 1;
 		ed.load(targetFile);
-		merged = false;
-		fm.caption("NSTE - " + targetFile + " (Unmerged)");
+		merged = true;
+		fm.caption("NSTE - " + targetFile);
 	}
 	return targetFile;
 }

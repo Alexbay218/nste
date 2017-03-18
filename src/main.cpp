@@ -3,6 +3,7 @@
 #endif
 
 #include "../include/runClass.h"
+#include "../include/scriptReader.h"
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -10,23 +11,28 @@
 #include <functional>
 #include <array>
 
+#include <nana/gui.hpp>
+#include <nana/gui/place.hpp>
+#include <nana/gui/widgets/panel.hpp>
+#include <nana/gui/widgets/textbox.hpp>
+
 int main(int argc, char *argv[]) {
 	runClass mainRun;
 	profileReader mainProfile;
+	scriptReader mainScript;
 
 	std::cout << "Arguments: " << argc << std::endl;
-	int ac = argc;
 	std::string path = argv[0];
-	path = path.substr(0, path.find("nste.exe"));
+	path = path.substr(0, path.find_last_of("nste"));
 	std::cout << "Path: " << path << std::endl;
 	std::string currentFile;
 	if (argc > 1) {
 		currentFile = mainRun.loadFile(argv[1]);
 	}
+	std::string currentThemeFilePath = path + "profile\\default.ntheme";
 
-	mainRun.onResize(); 
-
-	auto profileRead = [&] {
+	mainRun.onResize();
+	auto profileRead = [&](std::string themeFilePath) {
 		std::cout << "Opening profile for " << currentFile << std::endl;
 		if (currentFile.find(".") != std::string::npos) {
 			mainProfile.loadProfile(path, currentFile.substr(currentFile.find_last_of(".") + 1));
@@ -37,10 +43,34 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		else {
-			std::cout << "Profile was not loaded! " << std::endl;
+			std::cout << "No profiles for  " << currentFile << std::endl;
 		}
-		mainProfile.loadProfile(path);
-		mainProfile.loadTheme(&mainRun.fm, &mainRun.mb, &mainRun.ed);
+		mainProfile.loadProfile(themeFilePath);
+		mainProfile.loadTheme(&mainRun.fm, &mainRun.mb, &mainRun.ed, &mainRun.ln);
+	};
+	auto loadScriptMenu = [&] {
+		mainRun.mb.at(2).clear();
+		mainScript.loadScript(path + "script\\");
+		unsigned int i = 0;
+		while (i < mainScript.scriptList.size()) {
+			auto temp = [&](nana::menu::item_proxy& ip) {
+				int index = ip.index();
+				std::cout << "Running Script" << std::endl;
+				mainScript.runScript(mainScript.scriptList[index].menuName, path + "script\\", currentFile);
+			};
+			mainRun.mb.at(2).append(mainScript.scriptList[i].menuName, temp);
+			i++;
+		}
+	};
+	auto refresh = [&] {
+		mainRun.ed.load(currentFile);
+		loadScriptMenu();
+		profileRead(currentThemeFilePath);
+		mainRun.ed.enable_caret();
+		mainRun.fm.activate();
+		mainRun.ed.focus();
+		mainRun.mb.focus();
+		mainRun.ed.focus();
 	};
 	auto open = [&] {
 		mainRun.fb.init_path(path);
@@ -59,11 +89,15 @@ int main(int argc, char *argv[]) {
 		else {
 			if (mainRun.fb()) {
 				currentFile = mainRun.loadFile(mainRun.fb.file());
-				profileRead();
-				mainRun.ed.enable_caret();
-				mainRun.fm.activate();
-				mainRun.ed.focus();
+				refresh();
 			}
+		}
+	};
+	auto openTheme = [&] {
+		mainRun.fb.init_path(path);
+		if (mainRun.fb()) {
+			currentThemeFilePath = mainRun.fb.file();
+			refresh();
 		}
 	};
 	auto create = [&] {
@@ -71,7 +105,7 @@ int main(int argc, char *argv[]) {
 		if (mainRun.fb()) {
 			mainRun.ed.store(mainRun.fb.file());
 			currentFile = mainRun.loadFile(mainRun.fb.file());
-			profileRead();
+			refresh();
 		}
 	};
 	auto merge = [&]() {
@@ -96,9 +130,9 @@ int main(int argc, char *argv[]) {
 		mainRun.ed.load(currentFile);
 		mainRun.ed.store(currentFile + ".ntmp");
 		currentFile = mainRun.loadFile(currentFile);
-		profileRead();
+		refresh();
 	};
-	auto push = [&] (const nana::arg_keyboard& arg) {
+	auto push = [&](const nana::arg_keyboard& arg) {
 		std::cout << arg.key << std::endl;
 		if (!arg.ctrl && mainRun.loaded > 0) {
 			std::cout << "Pushing" << std::endl;
@@ -127,11 +161,14 @@ int main(int argc, char *argv[]) {
 		if (arg.key == 79 && arg.ctrl) {
 			open();
 		}
+		if (arg.key == 82 && arg.ctrl) {
+			refresh();
+		}
 	};
 	auto preview = [&] {
 		if (mainRun.loaded > 0) {
 			std::cout << "Previewing " << currentFile << std::endl;
-			nana::form pv(mainRun.fm,nana::size(600,300),nana::appearance());
+			nana::form pv(mainRun.fm, nana::size(600, 300), nana::appearance());
 			pv.caption(currentFile);
 			nana::textbox pvtb(pv);
 			pvtb.editable(false);
@@ -146,11 +183,7 @@ int main(int argc, char *argv[]) {
 			pv.show();
 			pv.modality();
 			std::cout << "Done with preview" << std::endl;
-			mainRun.ed.enable_caret();
-			mainRun.fm.activate();
-			mainRun.ed.focus();
-			mainRun.mb.focus();
-			mainRun.ed.focus();
+			refresh();
 		}
 		else {
 			nana::msgbox mb(mainRun.fm, "Cannot Preview!");
@@ -163,7 +196,9 @@ int main(int argc, char *argv[]) {
 	mainRun.mb.at(0).append("Create", [&](nana::menu::item_proxy &) {create(); });
 	mainRun.mb.at(0).append("Merge", [&](nana::menu::item_proxy &) {merge(); });
 	mainRun.mb.at(0).append("Revert", [&](nana::menu::item_proxy &) {revert(); });
+	mainRun.mb.at(1).append("Refresh", [&](nana::menu::item_proxy &) {refresh(); });
 	mainRun.mb.at(1).append("Preview", [&](nana::menu::item_proxy &) {preview(); });
+	mainRun.mb.at(1).append("Choose Theme", [&](nana::menu::item_proxy &) {openTheme(); });
 
 	mainRun.ed.events().key_release(push);
 	mainRun.fm.events().resizing([&] {mainRun.onResize(); });
@@ -175,16 +210,18 @@ int main(int argc, char *argv[]) {
 			nana::msgbox::pick_t r = emb.show();
 			if (r == nana::msgbox::pick_yes) {
 				mainRun.ed.store(currentFile);
+				mainRun.running = false;
 			}
 			else if (r == nana::msgbox::pick_cancel) {
 				arg.cancel = true;
 			}
 			else {
 				arg.cancel = false;
+				mainRun.running = false;
 			}
 		}
 	});
-	profileRead();
+	refresh();
 	mainRun.fm.show();
 	mainRun.ed.focus();
 	nana::exec();
