@@ -10,14 +10,14 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <math.h>
 
 class compareHighlight {
 public:
 	compareHighlight();
 	std::fstream file1; //being compare from
 	std::fstream file2; //being compared to (highlighting is happening on here)
-	nana::textbox display;
 
 	std::vector<int> lines;
-	nana::textbox* highlight(std::string l1,std::string l2);
+	void highlight(nana::textbox* display, std::string l1,std::string l2);
 };

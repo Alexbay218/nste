@@ -4,6 +4,7 @@
 
 #include "../include/runClass.h"
 #include "../include/scriptReader.h"
+#include "../include/compareHighlight.h"
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -20,6 +21,7 @@ int main(int argc, char *argv[]) {
 	runClass mainRun;
 	profileReader mainProfile;
 	scriptReader mainScript;
+	compareHighlight mainPreview;
 
 	std::cout << "Arguments: " << argc << std::endl;
 	std::string path = argv[0];
@@ -63,7 +65,12 @@ int main(int argc, char *argv[]) {
 		}
 	};
 	auto refresh = [&] {
-		mainRun.ed.load(currentFile);
+		if (mainRun.loaded > 0) {
+			mainRun.ed.store(currentFile + ".ntmp");
+		}
+		else {
+			mainRun.ed.load(currentFile);
+		}
 		loadScriptMenu();
 		profileRead(currentThemeFilePath);
 		mainRun.ed.enable_caret();
@@ -132,6 +139,34 @@ int main(int argc, char *argv[]) {
 		currentFile = mainRun.loadFile(currentFile);
 		refresh();
 	};
+	auto preview = [&] {
+		if (mainRun.loaded > 0) {
+			std::cout << "Previewing " << currentFile << std::endl;
+			nana::form pv(mainRun.fm, nana::size(600, 300), nana::appearance());
+
+			pv.caption(currentFile);
+			nana::textbox pvtb(pv);
+			pvtb.editable(false);
+			pvtb.focus_behavior(nana::textbox::text_focus_behavior::none);
+			pvtb.typeface(*mainRun.defaultFont);
+			pvtb.load(currentFile);
+			pvtb.move(nana::point(5, 5));
+			mainPreview.highlight(&pvtb, currentFile, currentFile + ".ntmp");
+			auto r = [&] {pvtb.size(nana::size(pv.size().width - 10, pv.size().height - 10)); };
+			pv.events().resized(r);
+			pv.events().resizing(r);
+			r();
+			pv.show();
+			pv.modality();
+			std::cout << "Done with preview" << std::endl;
+			refresh();
+		}
+		else {
+			nana::msgbox mb(mainRun.fm, "Cannot Preview!");
+			mb.icon(nana::msgbox::icon_error) << "Please create file first!";
+			mb.show();
+		}
+	};
 	auto push = [&](const nana::arg_keyboard& arg) {
 		std::cout << arg.key << std::endl;
 		if (!arg.ctrl && mainRun.loaded > 0) {
@@ -164,31 +199,8 @@ int main(int argc, char *argv[]) {
 		if (arg.key == 82 && arg.ctrl) {
 			refresh();
 		}
-	};
-	auto preview = [&] {
-		if (mainRun.loaded > 0) {
-			std::cout << "Previewing " << currentFile << std::endl;
-			nana::form pv(mainRun.fm, nana::size(600, 300), nana::appearance());
-			pv.caption(currentFile);
-			nana::textbox pvtb(pv);
-			pvtb.editable(false);
-			pvtb.focus_behavior(nana::textbox::text_focus_behavior::none);
-			pvtb.typeface(*mainRun.defaultFont);
-			pvtb.load(currentFile);
-			pvtb.move(nana::point(5, 5));
-			auto r = [&] {pvtb.size(nana::size(pv.size().width - 10, pv.size().height - 10)); };
-			pv.events().resized(r);
-			pv.events().resizing(r);
-			r();
-			pv.show();
-			pv.modality();
-			std::cout << "Done with preview" << std::endl;
-			refresh();
-		}
-		else {
-			nana::msgbox mb(mainRun.fm, "Cannot Preview!");
-			mb.icon(nana::msgbox::icon_error) << "Please create file first!";
-			mb.show();
+		if (arg.key == 87 && arg.ctrl) {
+			preview();
 		}
 	};
 
