@@ -19,7 +19,7 @@ Pushes the .ntmp file contents into the document that it refers to
 <br>
 <br>
 ## Compiling:
-Make sure to setup the nana library (http://nanapro.org/en-us/)
+Make sure to setup the nana 1.4.1 library (http://nanapro.org/en-us/) 
 
 Windows releases are built using Microsoft Visual Studio 2017
 
